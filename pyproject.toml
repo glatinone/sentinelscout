@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sentinelscout"
+version = "0.1.0"
+description = "Multi-source OSINT aggregator for threat intelligence"
+readme = "README.md"
+license = "MIT"
+authors = [{name = "glatinone", url = "https://github.com/glatinone"}]
+requires-python = ">=3.10"
+dependencies = [
+    "httpx",
+    "python-dotenv",
+    "typer[all]",
+    "rich",
+]
+
+[project.scripts]
+sentinelscout = "sentinelscout.cli:app"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["sentinelscout"]
