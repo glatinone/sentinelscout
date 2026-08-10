@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint-and-smoke-test:
+    name: Lint & smoke test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package with dev extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint with ruff
+        run: |
+          # ruff runs with sensible defaults even without a [tool.ruff] config block.
+          ruff check .
+
+      - name: Smoke test - package imports cleanly
+        run: |
+          # NOTE: There is no test suite in this repository yet (no tests/ directory,
+          # no pytest configuration). This step is a minimal substitute that verifies
+          # the package and its subpackages import without error, so we don't
+          # fabricate a `pytest` step that would run against nothing. Replace/extend
+          # this once real tests exist under tests/.
+          python -c "
+          import importlib
+
+          modules = [
+              'sentinelscout',
+              'sentinelscout.cli',
+              'sentinelscout.analyzer',
+              'sentinelscout.config',
+              'sentinelscout.models',
+              'sentinelscout.sources',
+              'sentinelscout.sources.base',
+              'sentinelscout.sources.virustotal',
+              'sentinelscout.sources.alienvault',
+              'sentinelscout.sources.shodan',
+              'sentinelscout.sources.cve',
+              'sentinelscout.sources.github',
+          ]
+
+          for name in modules:
+              print(f'importing {name} ...')
+              importlib.import_module(name)
+
+          print('All modules imported successfully.')
+          "
+
+      - name: Verify CLI entrypoint is wired up
+        run: |
+          sentinelscout --help
